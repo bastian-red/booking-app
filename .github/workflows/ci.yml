@@ -1,0 +1,141 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  AUTH_SECRET: ci-secret-at-least-32-characters-long
+  PAYMENTS_ENABLED: 'false'
+
+jobs:
+  gate:
+    name: Lint, typecheck, unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @booking/db generate
+      - name: Build libraries
+        run: pnpm --filter "./packages/*" --filter "./services/*" build
+      - run: pnpm typecheck
+      - run: pnpm test
+
+  integration:
+    name: API concurrency integration test
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: booking
+          POSTGRES_PASSWORD: booking
+          POSTGRES_DB: booking
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U booking" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://booking:booking@localhost:5432/booking?schema=public
+      REDIS_URL: redis://localhost:6379
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @booking/db generate
+      - run: pnpm --filter "./packages/*" --filter "./services/*" build
+      - name: Apply migrations
+        run: pnpm --filter @booking/db exec prisma migrate deploy
+      - name: Run integration tests
+        run: pnpm --filter @booking/api test:integration
+
+  e2e:
+    name: End-to-end (Playwright)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: booking
+          POSTGRES_PASSWORD: booking
+          POSTGRES_DB: booking
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U booking" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+      mailhog:
+        image: mailhog/mailhog:latest
+        ports: ['1025:1025', '8025:8025']
+    env:
+      DATABASE_URL: postgresql://booking:booking@localhost:5432/booking?schema=public
+      REDIS_URL: redis://localhost:6379
+      API_PORT: '4000'
+      API_BASE_URL: http://localhost:4000
+      APP_BASE_URL: http://localhost:3000
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
+      WEB_PORT: '3000'
+      SMTP_HOST: localhost
+      SMTP_PORT: '1025'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @booking/db generate
+      - name: Build everything
+        run: |
+          pnpm --filter "./packages/*" --filter "./services/*" build
+          pnpm --filter @booking/api build
+          pnpm --filter @booking/worker build
+          pnpm --filter @booking/web build
+      - name: Migrate + seed
+        run: |
+          pnpm --filter @booking/db exec prisma migrate deploy
+          pnpm --filter @booking/db seed
+      - name: Install Playwright browsers
+        run: pnpm --filter @booking/e2e exec playwright install --with-deps chromium firefox
+      - name: Start services
+        run: |
+          node apps/api/dist/main.js > /tmp/api.log 2>&1 &
+          node apps/worker/dist/main.js > /tmp/worker.log 2>&1 &
+          pnpm --filter @booking/web start > /tmp/web.log 2>&1 &
+      - name: Wait for API and web
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:4000/health && break || sleep 2
+          done
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3000 && break || sleep 2
+          done
+      - name: Run E2E
+        run: pnpm --filter @booking/e2e test:e2e
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: e2e/playwright-report/
+          retention-days: 7

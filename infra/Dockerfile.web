@@ -1,0 +1,26 @@
+# Build context is the repo root: docker build -f infra/Dockerfile.web .
+# Web also deploys cleanly to Vercel; this image is for self-hosting.
+FROM node:20-slim AS base
+ENV PNPM_HOME="/pnpm" PATH="/pnpm:$PATH" COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+RUN corepack enable
+WORKDIR /app
+
+FROM base AS build
+# NEXT_PUBLIC_* vars are baked at build time.
+ARG NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
+ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
+ENV AUTH_SECRET=build-time-placeholder-secret-32chars
+COPY . .
+RUN pnpm install --frozen-lockfile
+RUN pnpm --filter @booking/shared build \
+ && pnpm --filter @booking/web build
+
+FROM base AS runner
+ENV NODE_ENV=production
+WORKDIR /app
+# Next.js standalone output (monorepo layout).
+COPY --from=build /app/apps/web/.next/standalone ./
+COPY --from=build /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=build /app/apps/web/public ./apps/web/public
+EXPOSE 3000
+CMD ["node", "apps/web/server.js"]

@@ -1,0 +1,243 @@
+:root {
+  --bg: #0b0f1a;
+  --panel: #131a2b;
+  --panel-2: #1b2438;
+  --border: #26304a;
+  --text: #e6ebf5;
+  --muted: #9aa6c0;
+  --brand: #6c8cff;
+  --brand-2: #8a6cff;
+  --ok: #37d399;
+  --warn: #ffcf5c;
+  --err: #ff6b7a;
+  --radius: 12px;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f4f6fb;
+    --panel: #ffffff;
+    --panel-2: #f0f3fa;
+    --border: #dbe1ee;
+    --text: #16203a;
+    --muted: #5b6784;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+}
+
+a {
+  color: var(--brand);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 20px 64px;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+}
+.nav .brand {
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--text);
+}
+.nav .links {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.hero {
+  padding: 48px 0 24px;
+}
+.hero h1 {
+  font-size: 40px;
+  margin: 0 0 12px;
+  background: linear-gradient(90deg, var(--brand), var(--brand-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.hero p {
+  color: var(--muted);
+  font-size: 18px;
+  max-width: 620px;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+
+label {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+  margin: 12px 0 6px;
+}
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+  font-size: 14px;
+}
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid var(--brand);
+  border-color: var(--brand);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+.btn:hover {
+  filter: brightness(1.1);
+  text-decoration: none;
+}
+.btn-primary {
+  background: linear-gradient(90deg, var(--brand), var(--brand-2));
+  border: none;
+  color: white;
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.between {
+  justify-content: space-between;
+}
+
+.muted {
+  color: var(--muted);
+}
+.error {
+  color: var(--err);
+  font-size: 14px;
+  margin-top: 8px;
+}
+.badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.badge-ok {
+  background: rgba(55, 211, 153, 0.15);
+  color: var(--ok);
+}
+.badge-warn {
+  background: rgba(255, 207, 92, 0.15);
+  color: var(--warn);
+}
+.badge-err {
+  background: rgba(255, 107, 122, 0.15);
+  color: var(--err);
+}
+
+.slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+.slot {
+  padding: 10px;
+  text-align: center;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  cursor: pointer;
+  font-size: 14px;
+}
+.slot.selected {
+  background: var(--brand);
+  color: white;
+  border-color: var(--brand);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+th,
+td {
+  text-align: left;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--border);
+}
+th {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.auth-wrap {
+  max-width: 400px;
+  margin: 48px auto;
+}
+.center {
+  text-align: center;
+}
+.stack > * + * {
+  margin-top: 8px;
+}

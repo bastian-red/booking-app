@@ -1,0 +1,136 @@
+// Booking-app data model.
+// IDs are opaque cuids: booking/event URLs are public, so we never expose
+// sequential counts. All instants are stored absolute (UTC) as timestamptz;
+// availability is stored in the host's local wall-clock (minutes from midnight)
+// and resolved to UTC by the slot engine. Money is integer cents (Stripe-native).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BookingStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  CANCELLED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String
+  // IANA timezone, e.g. "America/Santiago". Availability rules are in this tz.
+  timezone     String   @default("UTC")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  eventTypes    EventType[]
+  availability  AvailabilityRule[]
+  overrides     AvailabilityOverride[]
+  bookings      Booking[]
+
+  @@map("users")
+}
+
+model EventType {
+  id              String   @id @default(cuid())
+  hostId          String   @map("host_id")
+  title           String
+  slug            String
+  description     String?
+  durationMinutes Int      @map("duration_minutes")
+  // null or 0 => free event (skips Stripe, auto-confirms).
+  priceCents      Int?     @map("price_cents")
+  currency        String   @default("usd")
+  bufferBeforeMin Int      @default(0) @map("buffer_before_min")
+  bufferAfterMin  Int      @default(0) @map("buffer_after_min")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  host     User      @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+
+  @@unique([hostId, slug])
+  @@index([hostId])
+  @@map("event_types")
+}
+
+model AvailabilityRule {
+  id          String @id @default(cuid())
+  hostId      String @map("host_id")
+  // 0 = Sunday .. 6 = Saturday (in the host's timezone).
+  dayOfWeek   Int    @map("day_of_week")
+  // Minutes from local midnight. e.g. 540 = 09:00, 1020 = 17:00.
+  startMinute Int    @map("start_minute")
+  endMinute   Int    @map("end_minute")
+
+  host User @relation(fields: [hostId], references: [id], onDelete: Cascade)
+
+  @@index([hostId])
+  @@map("availability_rules")
+}
+
+model AvailabilityOverride {
+  id          String   @id @default(cuid())
+  hostId      String   @map("host_id")
+  // A specific local date (host tz) that overrides the weekly rules.
+  date        DateTime @db.Date
+  // When true, the whole date is blocked. Otherwise the window below applies.
+  isBlocked   Boolean  @default(true) @map("is_blocked")
+  startMinute Int?     @map("start_minute")
+  endMinute   Int?     @map("end_minute")
+
+  host User @relation(fields: [hostId], references: [id], onDelete: Cascade)
+
+  @@unique([hostId, date])
+  @@index([hostId])
+  @@map("availability_overrides")
+}
+
+model Booking {
+  id            String        @id @default(cuid())
+  eventTypeId   String        @map("event_type_id")
+  hostId        String        @map("host_id")
+  guestName     String        @map("guest_name")
+  guestEmail    String        @map("guest_email")
+  // IANA tz the guest booked in (for display + email localization).
+  guestTimezone String        @map("guest_timezone")
+  startUtc      DateTime      @map("start_utc") @db.Timestamptz
+  endUtc        DateTime      @map("end_utc") @db.Timestamptz
+  status        BookingStatus @default(PENDING_PAYMENT)
+  priceCents    Int           @default(0) @map("price_cents")
+  currency      String        @default("usd")
+
+  stripeSessionId       String?   @map("stripe_session_id")
+  stripePaymentIntentId String?   @map("stripe_payment_intent_id")
+  reminderSentAt        DateTime? @map("reminder_sent_at") @db.Timestamptz
+  cancelledAt           DateTime? @map("cancelled_at") @db.Timestamptz
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  eventType EventType @relation(fields: [eventTypeId], references: [id], onDelete: Cascade)
+  host      User      @relation(fields: [hostId], references: [id], onDelete: Cascade)
+
+  // NOTE: the anti-double-booking guarantee is a GiST exclusion constraint added
+  // in a raw SQL migration (Prisma cannot model EXCLUDE). See migrations.
+  @@index([hostId])
+  @@index([eventTypeId])
+  @@index([stripeSessionId])
+  @@index([status, startUtc])
+  @@map("bookings")
+}
+
+// Processed Stripe webhook event ids, for idempotent webhook handling.
+model StripeEvent {
+  id          String   @id
+  type        String
+  processedAt DateTime @default(now()) @map("processed_at") @db.Timestamptz
+
+  @@map("stripe_events")
+}

@@ -1,0 +1,31 @@
+{
+  "name": "@booking/notifications",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "lint": "eslint \"src/**/*.ts\""
+  },
+  "dependencies": {
+    "date-fns-tz": "^3.2.0",
+    "nodemailer": "^6.9.16"
+  },
+  "devDependencies": {
+    "@booking/config": "workspace:*",
+    "@types/node": "^20.17.6",
+    "@types/nodemailer": "^6.4.17",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  }
+}
