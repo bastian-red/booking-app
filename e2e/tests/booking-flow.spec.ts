@@ -25,7 +25,14 @@ test('host sets up an event and a guest books it', async ({ page }) => {
       const cb = page.locator(`input[name="enabled-${day}"]`);
       if (!(await cb.isChecked())) await cb.check();
     }
-    await page.getByRole('button', { name: 'Save availability' }).click();
+    // Submit the server action and wait for its POST to complete before
+    // reloading, otherwise the reload can read the DB before the save lands.
+    await Promise.all([
+      page.waitForResponse(
+        (r) => r.url().includes('/dashboard/availability') && r.request().method() === 'POST',
+      ),
+      page.getByRole('button', { name: 'Save availability' }).click(),
+    ]);
     // Persisted: reload and confirm Monday is still enabled.
     await page.reload();
     await expect(page.locator('input[name="enabled-1"]')).toBeChecked();

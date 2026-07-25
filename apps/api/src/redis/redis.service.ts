@@ -23,6 +23,10 @@ export class RedisService implements OnModuleDestroy {
   }
 
   async ping(): Promise<boolean> {
+    // With maxRetriesPerRequest:null a command issued while disconnected sits in
+    // the offline queue forever, which would hang /health. Only ping when the
+    // connection is actually ready so a down Redis fails fast.
+    if (this.client.status !== 'ready') return false;
     try {
       return (await this.client.ping()) === 'PONG';
     } catch {
@@ -45,8 +49,9 @@ export class RedisService implements OnModuleDestroy {
     await this.client.eval(RELEASE_SCRIPT, 1, key, token);
   }
 
-  /** Read the worker heartbeat timestamp (ms epoch), or null if absent. */
+  /** Read the worker heartbeat timestamp (ms epoch), or null if absent/down. */
   async workerHeartbeat(): Promise<number | null> {
+    if (this.client.status !== 'ready') return null;
     const v = await this.client.get(WORKER_HEARTBEAT_KEY);
     return v ? Number(v) : null;
   }
