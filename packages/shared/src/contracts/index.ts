@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { passwordSchema } from '../auth/password-strength';
 
 /** IANA timezone sanity check (not exhaustive, but rejects obvious garbage). */
 export const timezoneSchema = z
@@ -19,7 +20,7 @@ export type BookingStatus = z.infer<typeof bookingStatusSchema>;
 // ---- Auth ----
 export const signupSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(8).max(200),
+  password: passwordSchema,
   name: z.string().min(1).max(120),
   timezone: timezoneSchema.default('UTC'),
 });

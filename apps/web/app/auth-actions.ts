@@ -4,6 +4,7 @@ import { AuthError } from 'next-auth';
 import { signupSchema } from '@booking/shared';
 import { signIn } from '@/auth';
 import { publicApiFetch, ApiError } from '@/lib/api';
+import { isHoneypotTripped } from '@/lib/honeypot';
 
 export type AuthState = { error?: string } | undefined;
 
@@ -20,6 +21,17 @@ export async function loginAction(_prev: AuthState, formData: FormData): Promise
 }
 
 export async function signupAction(_prev: AuthState, formData: FormData): Promise<AuthState> {
+  // Bot trap: reject filled honeypot or impossibly fast submissions. The message
+  // is intentionally generic so a bot cannot learn why it was blocked.
+  if (
+    isHoneypotTripped({
+      company: String(formData.get('company') ?? ''),
+      ts: Number(formData.get('_ts')),
+    })
+  ) {
+    return { error: 'Could not create the account. Please try again.' };
+  }
+
   const parsed = signupSchema.safeParse({
     email: formData.get('email'),
     password: formData.get('password'),
@@ -27,7 +39,8 @@ export async function signupAction(_prev: AuthState, formData: FormData): Promis
     timezone: formData.get('timezone') || 'UTC',
   });
   if (!parsed.success) {
-    return { error: 'Check your details (password needs at least 8 characters).' };
+    // Surface the first specific rule (password policy, email, name) to the user.
+    return { error: parsed.error.issues[0]?.message ?? 'Please check your details.' };
   }
 
   try {

@@ -1,7 +1,11 @@
 import { Controller, Get, Res } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { HealthService } from './health.service';
 
+// Monitoring must never be rate limited — Updown and the uptime probe poll this
+// on a fixed interval and a 429 would read as a false outage.
+@SkipThrottle()
 @Controller()
 export class HealthController {
   constructor(private readonly health: HealthService) {}

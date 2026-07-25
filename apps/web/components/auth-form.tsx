@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
 import Link from 'next/link';
+import { scorePassword } from '@booking/shared';
 import type { AuthState } from '../app/auth-actions';
 
 function SubmitButton({ label }: { label: string }) {
@@ -11,6 +12,24 @@ function SubmitButton({ label }: { label: string }) {
     <button className="btn btn-primary" type="submit" disabled={pending} style={{ width: '100%' }}>
       {pending ? 'Please wait…' : label}
     </button>
+  );
+}
+
+/** Segmented strength meter driven by the shared scorePassword policy. */
+function StrengthMeter({ password }: { password: string }) {
+  const { score, label, valid } = useMemo(() => scorePassword(password), [password]);
+  const segments = [1, 2, 3, 4];
+  return (
+    <div className="strength" aria-live="polite">
+      <div className="strength-bars">
+        {segments.map((n) => (
+          <span key={n} className={`strength-seg${n <= score ? ' on' : ''}`} />
+        ))}
+      </div>
+      <span className="strength-label mono">
+        {password.length === 0 ? 'PASSWORD STRENGTH' : `${label.toUpperCase()}${valid ? '' : ' · needs 10+ chars, A-z, 0-9'}`}
+      </span>
+    </div>
   );
 }
 
@@ -23,6 +42,9 @@ export function AuthForm({
 }) {
   const [state, formAction] = useFormState(action, undefined);
   const [tz, setTz] = useState('UTC');
+  const [password, setPassword] = useState('');
+  // Stable render timestamp for the honeypot fill-time check.
+  const [renderedAt] = useState(() => Date.now());
 
   useEffect(() => {
     try {
@@ -44,6 +66,12 @@ export function AuthForm({
               <label htmlFor="name">Name</label>
               <input id="name" name="name" required autoComplete="name" />
               <input type="hidden" name="timezone" value={tz} />
+              <input type="hidden" name="_ts" value={renderedAt} />
+              {/* Honeypot: hidden from humans, tempting to bots. Never fill this. */}
+              <div className="hp" aria-hidden="true">
+                <label htmlFor="company">Company</label>
+                <input id="company" name="company" type="text" tabIndex={-1} autoComplete="off" />
+              </div>
             </>
           )}
           <label htmlFor="email">Email</label>
@@ -55,7 +83,9 @@ export function AuthForm({
             type="password"
             required
             autoComplete={isSignup ? 'new-password' : 'current-password'}
+            onChange={isSignup ? (e) => setPassword(e.target.value) : undefined}
           />
+          {isSignup && <StrengthMeter password={password} />}
           <div style={{ marginTop: 16 }}>
             <SubmitButton label={isSignup ? 'Sign up' : 'Log in'} />
           </div>

@@ -14,7 +14,11 @@ test('host sets up an event and a guest books it', async ({ page }) => {
     await page.goto('/signup');
     await page.getByLabel('Name').fill('E2E Host');
     await page.getByLabel('Email').fill(hostEmail);
-    await page.getByLabel('Password').fill('password123');
+    // Must satisfy the shared password policy (length + upper + lower + digit).
+    await page.getByLabel('Password', { exact: true }).fill('E2eStr0ngPass');
+    // The signup honeypot rejects submissions faster than MIN_FILL_MS (2s), so
+    // wait past that window before submitting — a real human always does.
+    await page.waitForTimeout(2200);
     await page.getByRole('button', { name: 'Sign up' }).click();
     await expect(page).toHaveURL(/\/dashboard$/);
   });

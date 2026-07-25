@@ -10,10 +10,4 @@ test.describe('health', () => {
     expect(body.db).toBe(true);
     expect(body.redis).toBe(true);
   });
-
-  test('status page renders service health', async ({ page }) => {
-    await page.goto('/status');
-    await expect(page.getByRole('heading', { name: 'Service status' })).toBeVisible();
-    await expect(page.getByText('Database (Postgres)')).toBeVisible();
-  });
 });

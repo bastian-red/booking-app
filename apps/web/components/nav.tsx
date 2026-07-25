@@ -6,10 +6,9 @@ export async function Nav() {
   return (
     <nav className="nav">
       <Link href="/" className="brand">
-        📅 Booking
+        Booking
       </Link>
       <div className="links">
-        <Link href="/status">Status</Link>
         {session?.user ? (
           <>
             <Link href="/dashboard">Dashboard</Link>

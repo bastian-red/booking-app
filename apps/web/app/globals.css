@@ -1,26 +1,47 @@
+/*
+ * Nothing-style design system.
+ * Monochrome (OLED black / pure white / precise grays), one red signal accent,
+ * flat surfaces with hard 1px borders, sharp corners, and uppercase mono
+ * metadata. Space Grotesk (display/body), Space Mono (labels/data), Doto
+ * (dot-matrix brand + numeric accents) are wired in app/layout.tsx.
+ */
+
 :root {
-  --bg: #0b0f1a;
-  --panel: #131a2b;
-  --panel-2: #1b2438;
-  --border: #26304a;
-  --text: #e6ebf5;
-  --muted: #9aa6c0;
-  --brand: #6c8cff;
-  --brand-2: #8a6cff;
-  --ok: #37d399;
-  --warn: #ffcf5c;
-  --err: #ff6b7a;
-  --radius: 12px;
+  --bg: #000000;
+  --panel: #0a0a0a;
+  --panel-2: #141414;
+  --border: #2a2a2a;
+  --border-strong: #3d3d3d;
+  --text: #ffffff;
+  --muted: #8a8a8a;
+  --accent: #ff0000; /* Nothing red — used only as a signal */
+  --ok: #ffffff;
+  --warn: #8a8a8a;
+  --err: #ff0000;
+  --radius: 0px;
+
+  /* Consume the next/font variables (--font-*) into named stacks with fallbacks.
+     Different names avoid a self-referential (and thus invalid) declaration. */
+  --ff-display: var(--font-display), -apple-system, system-ui, sans-serif;
+  --ff-mono: var(--font-mono), 'SF Mono', ui-monospace, monospace;
+  --ff-dot: var(--font-dot), var(--font-mono), 'SF Mono', monospace;
+
+  /* Faint dot-matrix texture behind the whole page. */
+  --dot-grid: radial-gradient(var(--border) 1px, transparent 1px);
 }
 
 @media (prefers-color-scheme: light) {
   :root {
-    --bg: #f4f6fb;
+    --bg: #ffffff;
     --panel: #ffffff;
-    --panel-2: #f0f3fa;
-    --border: #dbe1ee;
-    --text: #16203a;
-    --muted: #5b6784;
+    --panel-2: #f5f5f5;
+    --border: #e5e5e5;
+    --border-strong: #d4d4d4;
+    --text: #000000;
+    --muted: #737373;
+    --ok: #000000;
+    --warn: #737373;
+    --dot-grid: radial-gradient(#e5e5e5 1px, transparent 1px);
   }
 }
 
@@ -32,19 +53,32 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background: var(--bg);
+  background-color: var(--bg);
+  background-image: var(--dot-grid);
+  background-size: 22px 22px;
   color: var(--text);
-  font-family:
-    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--ff-display);
   line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
 a {
-  color: var(--brand);
+  color: var(--text);
   text-decoration: none;
+  border-bottom: 1px solid var(--accent);
+  transition: opacity 0.15s ease;
 }
 a:hover {
-  text-decoration: underline;
+  opacity: 0.6;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--ff-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
 }
 
 .container {
@@ -53,109 +87,180 @@ a:hover {
   padding: 24px 20px 64px;
 }
 
+/* ---- Nav ---- */
 .nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  border-bottom: 1px solid var(--border);
-  background: var(--panel);
+  border-bottom: 1px solid var(--border-strong);
+  background: var(--bg);
 }
 .nav .brand {
+  font-family: var(--ff-dot);
   font-weight: 700;
-  font-size: 18px;
+  font-size: 22px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--text);
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+/* The Nothing red dot. */
+.nav .brand::before {
+  content: '';
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: inline-block;
 }
 .nav .links {
   display: flex;
-  gap: 16px;
+  gap: 20px;
   align-items: center;
+  font-family: var(--ff-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.nav .links a {
+  border-bottom: none;
+}
+.nav .links a:hover {
+  color: var(--accent);
+  opacity: 1;
 }
 
+/* ---- Hero ---- */
 .hero {
-  padding: 48px 0 24px;
+  padding: 64px 0 32px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 32px;
 }
 .hero h1 {
-  font-size: 40px;
-  margin: 0 0 12px;
-  background: linear-gradient(90deg, var(--brand), var(--brand-2));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  font-size: clamp(36px, 6vw, 56px);
+  line-height: 1.02;
+  margin: 0 0 20px;
+  color: var(--text);
 }
 .hero p {
   color: var(--muted);
-  font-size: 18px;
+  font-size: 16px;
   max-width: 620px;
 }
+/* Dot-matrix eyebrow marker above headings. */
+.hero::before {
+  content: '// BOOKING SYSTEM';
+  display: block;
+  font-family: var(--ff-mono);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  margin-bottom: 20px;
+}
 
+/* ---- Cards & grid ---- */
 .card {
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 20px;
+  padding: 24px;
   margin-bottom: 16px;
 }
-
+.card h3 {
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  margin: 0 0 10px;
+}
 .grid {
   display: grid;
-  gap: 16px;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
 }
+/* Cards inside a grid share hairline seams instead of gaps. */
+.grid .card {
+  margin: 0;
+  border: none;
+}
 
+/* ---- Forms ---- */
 label {
   display: block;
-  font-size: 13px;
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
   color: var(--muted);
-  margin: 12px 0 6px;
+  margin: 16px 0 8px;
 }
 input,
 select,
 textarea {
   width: 100%;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-strong);
   background: var(--panel-2);
   color: var(--text);
+  font-family: var(--ff-display);
   font-size: 14px;
 }
 input:focus,
 select:focus,
 textarea:focus {
-  outline: 2px solid var(--brand);
-  border-color: var(--brand);
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
 }
 
+/* ---- Buttons ---- */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--panel-2);
+  gap: 10px;
+  padding: 12px 20px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-strong);
+  background: transparent;
   color: var(--text);
-  font-size: 14px;
-  font-weight: 600;
+  font-family: var(--ff-mono);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   cursor: pointer;
-  transition: filter 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
 .btn:hover {
-  filter: brightness(1.1);
+  border-color: var(--text);
   text-decoration: none;
 }
+/* Primary is the Nothing white block: white fill, black label. */
 .btn-primary {
-  background: linear-gradient(90deg, var(--brand), var(--brand-2));
-  border: none;
-  color: white;
+  background: var(--text);
+  border-color: var(--text);
+  color: var(--bg);
+}
+.btn-primary:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
 }
 .btn:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
+/* ---- Layout helpers ---- */
 .row {
   display: flex;
   gap: 12px;
@@ -165,35 +270,50 @@ textarea:focus {
 .between {
   justify-content: space-between;
 }
-
 .muted {
   color: var(--muted);
 }
 .error {
   color: var(--err);
-  font-size: 14px;
-  margin-top: 8px;
-}
-.badge {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 999px;
+  font-family: var(--ff-mono);
   font-size: 12px;
-  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin-top: 10px;
+}
+
+/* ---- Badges ---- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+.badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
 }
 .badge-ok {
-  background: rgba(55, 211, 153, 0.15);
   color: var(--ok);
 }
 .badge-warn {
-  background: rgba(255, 207, 92, 0.15);
   color: var(--warn);
 }
 .badge-err {
-  background: rgba(255, 107, 122, 0.15);
   color: var(--err);
+  border-color: var(--err);
 }
 
+/* ---- Slots ---- */
 .slots {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
@@ -201,20 +321,28 @@ textarea:focus {
   margin-top: 12px;
 }
 .slot {
-  padding: 10px;
+  padding: 12px;
   text-align: center;
-  border-radius: 8px;
-  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-strong);
   background: var(--panel-2);
   cursor: pointer;
-  font-size: 14px;
+  font-family: var(--ff-mono);
+  font-size: 13px;
+  transition:
+    border-color 0.12s ease,
+    background 0.12s ease;
+}
+.slot:hover {
+  border-color: var(--accent);
 }
 .slot.selected {
-  background: var(--brand);
-  color: white;
-  border-color: var(--brand);
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
 }
 
+/* ---- Tables ---- */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -223,21 +351,64 @@ table {
 th,
 td {
   text-align: left;
-  padding: 10px 8px;
+  padding: 12px 10px;
   border-bottom: 1px solid var(--border);
 }
 th {
+  font-family: var(--ff-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   color: var(--muted);
-  font-weight: 600;
+  font-weight: 700;
 }
 
+/* ---- Auth ---- */
 .auth-wrap {
   max-width: 400px;
-  margin: 48px auto;
+  margin: 56px auto;
 }
 .center {
   text-align: center;
 }
 .stack > * + * {
   margin-top: 8px;
+}
+
+/* ---- Password strength meter ---- */
+.strength {
+  margin-top: 10px;
+}
+.strength-bars {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+.strength-seg {
+  height: 4px;
+  background: var(--border-strong);
+  transition: background 0.15s ease;
+}
+.strength-seg.on {
+  background: var(--accent);
+}
+.strength-label {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+.mono {
+  font-family: var(--ff-mono);
+}
+
+/* ---- Honeypot: removed from layout and from assistive tech, still in the DOM ---- */
+.hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
 }

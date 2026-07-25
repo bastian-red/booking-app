@@ -16,7 +16,6 @@ The two hard problems are solved properly:
 [![Uptime](https://img.shields.io/badge/uptime-Updown-blue)](https://updown.io)
 
 **Live demo:** https://web-production-402d9.up.railway.app
-· **Status page:** https://web-production-402d9.up.railway.app/status
 · **Health:** https://api-production-96ce.up.railway.app/health
 
 Try it: open the live demo, sign up as a host, set your weekly availability and an event type, then
@@ -82,7 +81,7 @@ flowchart LR
 ## Monorepo layout
 
 ```
-apps/web        Next.js: host dashboard + public booking + Auth.js + /status
+apps/web        Next.js: host dashboard + public booking + Auth.js
 apps/api        NestJS: availability, slots, bookings, payments webhook, /health, auth
 apps/worker     BullMQ workers: confirmation, reminder, expiry, heartbeat
 services/payments        Stripe wrapper + contract
@@ -161,7 +160,6 @@ The live instance runs entirely on **Railway** (one project, five services):
 - **Monitoring:** point [Updown.io](https://updown.io) at the `/health` URL above. It returns `503` if Postgres
   or Redis is down (and fails fast — a disconnected dependency does not hang the check), so uptime reflects real
   dependency health, not just process liveness. Paste the resulting Updown badge token into the badge at the top.
-- `/status` (web) renders a live service board from the same health endpoint.
 - The web app also deploys cleanly to Vercel (root `apps/web`); Railway was chosen here to keep all five
   services in one project.
 

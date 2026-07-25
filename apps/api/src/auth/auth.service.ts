@@ -4,6 +4,14 @@ import type { LoginInput, SignupInput } from '@booking/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { hashPassword, verifyPassword } from './password';
 
+/**
+ * A real scrypt hash of a value no user can have. When a login targets an
+ * unknown email we still verify against this, so the request costs the same
+ * whether or not the account exists — closing the timing-based enumeration
+ * oracle that a bare `if (!user) throw` would open.
+ */
+const DUMMY_PASSWORD_HASH = hashPassword('timing-equalizer-not-a-real-password');
+
 export interface SafeUser {
   id: string;
   email: string;
@@ -37,7 +45,9 @@ export class AuthService {
 
   async login(input: LoginInput): Promise<SafeUser> {
     const user = await this.prisma.user.findUnique({ where: { email: input.email.toLowerCase() } });
-    if (!user || !verifyPassword(input.password, user.passwordHash)) {
+    // Always run a verification, even for unknown emails, to equalize timing.
+    const passwordOk = verifyPassword(input.password, user?.passwordHash ?? DUMMY_PASSWORD_HASH);
+    if (!user || !passwordOk) {
       throw new UnauthorizedException('Invalid email or password');
     }
     return { id: user.id, email: user.email, name: user.name, timezone: user.timezone };
