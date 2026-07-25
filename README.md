@@ -11,11 +11,17 @@ The two hard problems are solved properly:
 2. **Timezone / DST correctness** — availability is stored in the host's local wall clock and resolved to
    absolute UTC with full daylight-saving handling, then shown to each guest in their own timezone.
 
-<!-- Replace with your deploy + Updown values -->
 ![CI](https://github.com/bastian-red/project001--booking-app/actions/workflows/ci.yml/badge.svg)
-[![Uptime](https://img.shields.io/uptimerobot/status/UPDOWN_TOKEN)](https://updown.io)
+<!-- Updown: create a check on the /health URL below, then paste its badge token here. -->
+[![Uptime](https://img.shields.io/badge/uptime-Updown-blue)](https://updown.io)
 
-**Live demo:** _add your public URL here_ · **Status page:** `/<web>/status` · **Health:** `<api>/health`
+**Live demo:** https://web-production-402d9.up.railway.app
+· **Status page:** https://web-production-402d9.up.railway.app/status
+· **Health:** https://api-production-96ce.up.railway.app/health
+
+Try it: open the live demo, sign up as a host, set your weekly availability and an event type, then
+open your public `/book/<slug>` link in another browser to book a slot as a guest. Payments are off in
+this demo, so free event types confirm instantly.
 
 ---
 
@@ -139,11 +145,25 @@ CI (`.github/workflows/ci.yml`) runs all three lanes on every push.
 
 ## Deployment & monitoring
 
-- **web** → Vercel. **api** + **worker** → Railway / Fly.io (Dockerfiles in `infra/`). **Postgres + Redis**
-  → managed instances.
-- Point [Updown.io](https://updown.io) at `<api>/health`. It returns `503` if Postgres or Redis is down,
-  so uptime reflects real dependency health, not just process liveness.
+The live instance runs entirely on **Railway** (one project, five services):
+
+| Service    | Source                     | Notes                                                        |
+| ---------- | -------------------------- | ------------------------------------------------------------ |
+| web        | `infra/Dockerfile.web`     | Next.js standalone. `HOSTNAME=0.0.0.0` so it binds all interfaces. |
+| api        | `infra/Dockerfile.api`     | `PORT=4000` to match the port the app listens on. `prisma migrate deploy` runs as a pre-deploy step. |
+| worker     | `infra/Dockerfile.worker`  | BullMQ consumer; no public domain.                           |
+| Postgres   | Railway managed template   | Persistent volume. `DATABASE_URL` referenced by api + worker. |
+| Redis      | Railway managed template   | Persistent volume. `REDIS_URL` referenced by api + worker.   |
+
+- api ↔ worker ↔ web share one `AUTH_SECRET` (the HS256 service-token contract). api and worker reach the
+  databases over Railway's private network; the browser calls api at its public domain (`NEXT_PUBLIC_API_BASE_URL`),
+  so api's CORS origin is set to the web domain (`APP_BASE_URL`).
+- **Monitoring:** point [Updown.io](https://updown.io) at the `/health` URL above. It returns `503` if Postgres
+  or Redis is down (and fails fast — a disconnected dependency does not hang the check), so uptime reflects real
+  dependency health, not just process liveness. Paste the resulting Updown badge token into the badge at the top.
 - `/status` (web) renders a live service board from the same health endpoint.
+- The web app also deploys cleanly to Vercel (root `apps/web`); Railway was chosen here to keep all five
+  services in one project.
 
 ### Environment variables
 
