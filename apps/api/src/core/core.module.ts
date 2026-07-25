@@ -1,6 +1,6 @@
 import { Global, Module } from '@nestjs/common';
 import { createPaymentsService, type PaymentsService } from '@booking/payments';
-import { NotificationService, createSmtpChannel } from '@booking/notifications';
+import { NotificationService, createChannelFromEnv } from '@booking/notifications';
 import { CONFIG, loadConfig, type AppConfig } from '../config/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from '../redis/redis.service';
@@ -32,9 +32,8 @@ export const NOTIFICATIONS = Symbol('NOTIFICATIONS');
     },
     {
       provide: NOTIFICATIONS,
-      useFactory: (config: AppConfig): NotificationService =>
-        new NotificationService(createSmtpChannel(config.smtp)),
-      inject: [CONFIG],
+      useFactory: (): NotificationService =>
+        new NotificationService(createChannelFromEnv()),
     },
   ],
   exports: [CONFIG, PrismaService, RedisService, QueueService, PAYMENTS, NOTIFICATIONS],

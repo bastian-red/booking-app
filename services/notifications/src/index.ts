@@ -57,6 +57,36 @@ export function createSmtpChannel(config: SmtpConfig): NotificationChannel {
   };
 }
 
+/**
+ * A channel that logs messages instead of delivering them. Used where no SMTP
+ * server exists (e.g. the public demo) so a missing mail server never fails a
+ * job. Never throws.
+ */
+export function createLogChannel(
+  log: (msg: EmailMessage) => void = (m) =>
+    console.log(`[mail:log] to=${m.to} subject=${JSON.stringify(m.subject)}`),
+): NotificationChannel {
+  return {
+    async send(msg: EmailMessage): Promise<void> {
+      log(msg);
+    },
+  };
+}
+
+/**
+ * Selects the delivery channel from the environment. When SMTP_HOST is set to a
+ * real host (dev points it at Mailhog, prod at a real relay) mail is sent over
+ * SMTP; otherwise messages are logged so the app runs without a mail server.
+ */
+export function createChannelFromEnv(
+  env: NodeJS.ProcessEnv = process.env,
+): NotificationChannel {
+  if (env.SMTP_HOST && env.SMTP_HOST.trim() !== '') {
+    return createSmtpChannel(smtpConfigFromEnv(env));
+  }
+  return createLogChannel();
+}
+
 export interface BookingEmailData {
   guestName: string;
   guestEmail: string;

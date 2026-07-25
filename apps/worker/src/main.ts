@@ -1,7 +1,7 @@
 import { Worker } from 'bullmq';
 import { Redis } from 'ioredis';
 import { getPrisma } from '@booking/db';
-import { NotificationService, createSmtpChannel, smtpConfigFromEnv } from '@booking/notifications';
+import { NotificationService, createChannelFromEnv } from '@booking/notifications';
 import { handleConfirmation, handleReminder, handleExpire, type WorkerDeps } from './handlers';
 
 const BOOKING_QUEUE = 'bookings';
@@ -15,7 +15,7 @@ function main(): void {
 
   const deps: WorkerDeps = {
     prisma: getPrisma(),
-    notifications: new NotificationService(createSmtpChannel(smtpConfigFromEnv())),
+    notifications: new NotificationService(createChannelFromEnv()),
     appBaseUrl: process.env.APP_BASE_URL ?? 'http://localhost:3000',
   };
 

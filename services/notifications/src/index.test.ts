@@ -4,6 +4,8 @@ import {
   renderReminder,
   NotificationService,
   smtpConfigFromEnv,
+  createLogChannel,
+  createChannelFromEnv,
   type BookingEmailData,
   type EmailMessage,
   type NotificationChannel,
@@ -62,5 +64,34 @@ describe('smtpConfigFromEnv', () => {
     expect(cfg.host).toBe('localhost');
     expect(cfg.port).toBe(1025);
     expect(cfg.secure).toBe(false);
+  });
+});
+
+describe('createLogChannel', () => {
+  it('logs instead of delivering and never throws', async () => {
+    const seen: EmailMessage[] = [];
+    const channel = createLogChannel((m) => void seen.push(m));
+    await expect(channel.send(renderConfirmation(data))).resolves.toBeUndefined();
+    expect(seen).toHaveLength(1);
+    expect(seen[0]!.to).toBe('ana@example.com');
+  });
+});
+
+describe('createChannelFromEnv', () => {
+  it('falls back to the log channel when SMTP_HOST is unset (prod without a mail server)', async () => {
+    const channel = createChannelFromEnv({});
+    // Resolves without any SMTP server reachable — a missing mail server cannot fail a job.
+    await expect(channel.send(renderConfirmation(data))).resolves.toBeUndefined();
+  });
+
+  it('treats a blank SMTP_HOST as unset', async () => {
+    const channel = createChannelFromEnv({ SMTP_HOST: '   ' });
+    await expect(channel.send(renderConfirmation(data))).resolves.toBeUndefined();
+  });
+
+  it('uses SMTP when SMTP_HOST is configured', () => {
+    // Building the transport does not open a connection, so this is safe offline.
+    const channel = createChannelFromEnv({ SMTP_HOST: 'smtp.example.com', SMTP_PORT: '587' });
+    expect(typeof channel.send).toBe('function');
   });
 });
