@@ -15,8 +15,7 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "lint": "eslint \"src/**/*.ts\""
+    "test:watch": "vitest"
   },
   "dependencies": {
     "date-fns": "^4.1.0",

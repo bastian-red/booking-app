@@ -44,8 +44,13 @@ export default async function DashboardPage() {
                     )}
                   </td>
                   <td>
+                    {/* The label has to be the real path. It used to render
+                        `/book/<slug>` while linking to `/book/<id>`, so a host
+                        who read the link and typed it got "Event type not
+                        found". The route keys on the id because a slug is only
+                        unique per host, not globally. */}
                     <Link href={`/book/${et.id}`} target="_blank">
-                      /book/{et.slug}
+                      /book/{et.id}
                     </Link>
                   </td>
                   <td>

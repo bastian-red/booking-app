@@ -24,6 +24,7 @@ jobs:
       - run: pnpm --filter @booking/db generate
       - name: Build libraries
         run: pnpm --filter "./packages/*" --filter "./services/*" build
+      - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
 

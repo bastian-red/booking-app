@@ -14,8 +14,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run",
-    "lint": "eslint \"src/**/*.ts\""
+    "test": "vitest run"
   },
   "dependencies": {
     "date-fns-tz": "^3.2.0",

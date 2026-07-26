@@ -3,15 +3,15 @@ import { SkipThrottle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { HealthService } from './health.service';
 
-// Monitoring must never be rate limited — Updown and the uptime probe poll this
-// on a fixed interval and a 429 would read as a false outage.
+// Health checks must never be rate limited: a monitor or an orchestrator polls
+// this on a fixed interval, and a 429 would read as a false outage.
 @SkipThrottle()
 @Controller()
 export class HealthController {
   constructor(private readonly health: HealthService) {}
 
   // A green health check with a dead dependency behind it is a bug: return 503
-  // whenever Postgres or Redis is unreachable, so Updown flags it.
+  // whenever Postgres or Redis is unreachable, so a caller sees the real state.
   @Get('health')
   async check(@Res() res: Response): Promise<void> {
     const result = await this.health.check();

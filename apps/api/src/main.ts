@@ -9,7 +9,7 @@ async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, { rawBody: true });
   const config = loadConfig();
 
-  // Behind Railway's proxy the socket IP is the proxy, not the client. Trust the
+  // Behind a reverse proxy the socket IP is the proxy, not the client. Trust the
   // first proxy hop so req.ip is the real client address the rate limiter keys on.
   app.getHttpAdapter().getInstance().set('trust proxy', 1);
 

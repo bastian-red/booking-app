@@ -1,5 +1,16 @@
 # Local development infrastructure: Postgres, Redis, Mailhog (test SMTP).
 # Usage: docker compose -f infra/docker-compose.yml up -d
+#
+# Ports are deliberately off the defaults. A developer machine very often already
+# runs a system PostgreSQL on 5432 or another project's Redis on 6379, and the
+# container then fails to bind with an error that reads like a Docker problem
+# rather than a port clash. Every URL in .env.example matches what is below.
+#
+# `name` is explicit for the same class of reason: Compose otherwise derives the
+# project name from the containing directory, which is `infra` in every project
+# of this portfolio, so two stacks would share one name and evict each other's
+# containers and volumes.
+name: booking
 services:
   postgres:
     image: postgres:16-alpine
@@ -10,7 +21,7 @@ services:
       POSTGRES_PASSWORD: booking
       POSTGRES_DB: booking
     ports:
-      - "5432:5432"
+      - "5434:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -25,7 +36,7 @@ services:
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
     ports:
-      - "6379:6379"
+      - "6381:6379"
     volumes:
       - redisdata:/data
     healthcheck:
@@ -39,8 +50,8 @@ services:
     container_name: booking-mailhog
     restart: unless-stopped
     ports:
-      - "1025:1025" # SMTP
-      - "8025:8025" # web UI at http://localhost:8025
+      - "1027:1025" # SMTP
+      - "8027:8025" # web UI at http://localhost:8027
 
 volumes:
   pgdata:

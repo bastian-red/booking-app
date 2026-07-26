@@ -1,5 +1,5 @@
 import type { PrismaClient } from '@booking/db';
-import { NotificationService, type BookingEmailData } from '@booking/notifications';
+import { type NotificationService, type BookingEmailData } from '@booking/notifications';
 
 export interface WorkerDeps {
   prisma: PrismaClient;

@@ -55,7 +55,10 @@ test('host sets up an event and a guest books it', async ({ page }) => {
 
   let bookingLink = '';
   await test.step('read the public booking link', async () => {
-    const link = page.getByRole('link', { name: new RegExp(`/book/${slug}`) }).first();
+    // Located by href rather than by link text. The route keys on the event
+    // type id (a slug is only unique per host), so the label is the id too, and
+    // matching on the slug would tie this test to how the link is worded.
+    const link = page.locator('a[href^="/book/"]').first();
     bookingLink = (await link.getAttribute('href')) ?? '';
     expect(bookingLink).toMatch(/\/book\//);
   });

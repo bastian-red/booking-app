@@ -9,6 +9,10 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : [['list']],
+  // The demo spec writes screenshot frames for the README GIF. scripts/demo-gif.sh
+  // sets DEMO=1 to let it through; a CLI --grep cannot override grepInvert,
+  // which is why this is an env check rather than a constant.
+  grepInvert: process.env.DEMO ? undefined : /@demo/,
   use: {
     baseURL: WEB_URL,
     trace: 'on-first-retry',
