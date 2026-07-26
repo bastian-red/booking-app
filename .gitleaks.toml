@@ -1,5 +1,8 @@
 # gitleaks configuration. Extends the default ruleset and allowlists values that
 # are intentional, non-secret placeholders (CI dummies, build args, example env).
+#
+# Enforced two ways: the pre-commit hook (scripts/pre-commit.mjs) runs
+# `gitleaks protect --staged`, and CI runs `gitleaks detect` over the history.
 [extend]
 useDefault = true
 
@@ -8,8 +11,9 @@ description = "CI/build placeholders and documented example env — not real cre
 regexes = [
   # Dummy AUTH_SECRET used only by CI test runs (config requires >=16 chars).
   '''ci-secret-at-least-32-characters-long''',
-  # Placeholder baked into the web Docker build stage; overridden at runtime.
-  '''build-time-placeholder-secret-32chars''',
+  # Default AUTH_SECRET in scripts/demo-gif.sh, used only to record the README
+  # GIF against a throwaway local database.
+  '''demo-secret-at-least-32-characters-long''',
 ]
 paths = [
   # Documented, value-less example environment file.

@@ -11,6 +11,22 @@ env:
   PAYMENTS_ENABLED: 'false'
 
 jobs:
+  # A secret in a commit is worth more to an attacker than any test failure, so
+  # the scan runs first and independently rather than as a step inside a job
+  # that might be skipped.
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+
   gate:
     name: Lint, typecheck, unit tests
     runs-on: ubuntu-latest
