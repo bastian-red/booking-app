@@ -18,15 +18,21 @@
     "db:migrate": "pnpm --filter @booking/db migrate:dev",
     "db:deploy": "pnpm --filter @booking/db migrate:deploy",
     "db:seed": "pnpm --filter @booking/db seed",
-    "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
+    "prepare": "node scripts/install-hooks.mjs",
+    "scan:secrets": "gitleaks detect --no-banner --redact --config .gitleaks.toml"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "eslint": "^10.8.0",
     "globals": "^17.8.0",
     "prettier": "^3.3.3",
+    "simple-git-hooks": "^2.13.1",
     "turbo": "^2.3.3",
     "typescript": "^5.6.3",
     "typescript-eslint": "^8.65.0"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "pnpm exec node scripts/pre-commit.mjs"
   }
 }
