@@ -11,7 +11,7 @@ The two hard problems are solved properly:
 2. **Timezone / DST correctness** — availability is stored in the host's local wall clock and resolved to
    absolute UTC with full daylight-saving handling, then shown to each guest in their own timezone.
 
-![CI](https://github.com/bastian-red/project001--booking-app/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/bastian-red/booking-app/actions/workflows/ci.yml/badge.svg)
 
 ![Demo](assets/demo.gif)
 
