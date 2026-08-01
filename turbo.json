@@ -1,44 +1,69 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalEnv": [
-    "NODE_ENV",
-    "DATABASE_URL",
-    "REDIS_URL",
+
+  // Turbo 2 defaults to strict env mode: a task's child process sees only the
+  // names below plus turbo's own system allowlist. Everything else is stripped
+  // silently, which is how this repo once started an API with no AUTH_SECRET and
+  // a worker whose REDIS_URL had been dropped, leaving it retrying against the
+  // default :6379 while the container listens on :6381. The default is kept
+  // deliberately -- switching to "loose" would hide the next under-declaration
+  // instead of fixing this one. scripts/env-contract.mjs keeps these lists
+  // honest against .env.example and against what the source actually reads.
+
+  // Feeds the cache key. Only variables that change what gets BUILT belong here,
+  // and never a secret: turbo hashes the value, so a rotated Stripe key would
+  // invalidate every cached build and put the credential into the hash input.
+  "globalEnv": ["API_BASE_URL", "NEXT_PUBLIC_API_BASE_URL", "NODE_ENV", "PAYMENTS_ENABLED"],
+
+  // Reaches the process without entering the cache key: runtime wiring, ports,
+  // credentials, operational tuning. Changing one of these must not force a
+  // rebuild, but the process must still see it.
+  "globalPassThroughEnv": [
+    "API_PORT",
+    "APP_BASE_URL",
     "AUTH_SECRET",
-    "PAYMENTS_ENABLED"
+    "AUTH_URL",
+    "DATABASE_URL",
+    "MAIL_FROM",
+    "PENDING_EXPIRY_MINUTES",
+    "REDIS_URL",
+    "REMINDER_LEAD_MINUTES",
+    "SMTP_HOST",
+    "SMTP_PASS",
+    "SMTP_PORT",
+    "SMTP_SECURE",
+    "SMTP_USER",
+    "STRIPE_SECRET_KEY",
+    "STRIPE_WEBHOOK_SECRET",
+    // Not application configuration, and deliberately absent from .env.example.
+    // It is here because this product is about timezone correctness:
+    // apps/web/lib/month-grid.test.ts builds the same month under TZ=UTC,
+    // Kiritimati, Midway and Santiago and asserts one identical grid. Without
+    // this line, `TZ=Pacific/Kiritimati pnpm test` would have TZ stripped by
+    // turbo and the suite would quietly run in the machine's own zone, passing
+    // while proving nothing.
+    "TZ",
+    "WEB_PORT"
   ],
+
   "tasks": {
     "build": {
-      "dependsOn": [
-        "^build"
-      ],
-      "outputs": [
-        "dist/**",
-        ".next/**",
-        "!.next/cache/**"
-      ]
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
     },
     "dev": {
       "cache": false,
       "persistent": true
     },
     "typecheck": {
-      "dependsOn": [
-        "^build"
-      ]
+      "dependsOn": ["^build"]
     },
     "test": {
-      "dependsOn": [
-        "^build"
-      ],
-      "outputs": [
-        "coverage/**"
-      ]
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"]
     },
     "test:integration": {
-      "dependsOn": [
-        "^build"
-      ],
+      "dependsOn": ["^build"],
       "cache": false
     },
     "test:e2e": {
