@@ -185,14 +185,39 @@ drift back into looking like a sibling repo.
 
 ## Testing
 
-Four lanes:
+Five lanes:
 
 ```bash
 pnpm test                                      # gate: unit tests (slot engine DST, payments, auth, worker, contrast, calendar)
+node scripts/env-contract.mjs                  # gate: turbo.json vs .env.example vs what the code reads
+./scripts/dev-smoke.sh                         # boots `pnpm dev` and asserts the booking page renders API data
 pnpm --filter @booking/api test:integration    # concurrency: N racers, exactly 1 booking (needs DB+Redis)
 ./scripts/e2e.sh                               # Playwright: full host→guest flow + axe, boots the stack itself
 ./scripts/a11y-baseline.sh                     # records axe findings to a file instead of failing on them
 ```
+
+**Environment contract (`scripts/env-contract.mjs`).** Turborepo 2 runs tasks in strict environment
+mode: a task's child process sees only the names declared in `turbo.json`, and everything else is
+stripped without a warning. This repo shipped with five names declared and twenty read, so the
+documented `pnpm dev` started an API with no `AUTH_SECRET` — it died at boot — and a worker whose
+`REDIS_URL` had been dropped, which then retried forever against the default `:6379` while
+`booking-redis` listens on `:6381`. The check asserts everything the source reads is declared,
+everything `.env.example` documents is declared, every declared name is used, and every documented
+name is actually read. That last one found `STRIPE_PUBLISHABLE_KEY` documenting a key nothing loads,
+since checkout is a server-side redirect to Stripe's hosted page.
+
+It also pins `TZ`, which is the one that matters most here. `apps/web/lib/month-grid.test.ts` builds
+the same month under `TZ=UTC`, `Pacific/Kiritimati`, `Pacific/Midway` and `America/Santiago` and
+asserts one identical grid. Undeclared, `TZ=Pacific/Kiritimati pnpm test` would have had `TZ` stripped
+by turbo and the suite would have run in the machine's own zone — passing while proving nothing, in
+the one repo whose entire premise is timezone correctness.
+
+**Dev smoke (`scripts/dev-smoke.sh`).** The contract check proves the names are declared; it cannot
+prove they arrive. This boots the real `pnpm dev` and asserts `/health` reports Postgres, Redis and
+the worker green, then that `/book/<id>` renders the seeded event type. The homepage is deliberately
+not the assertion: it is static marketing and renders fine against a dead API. It launches with every
+name in `.env` stripped from the environment, so the app can only be configured by the repo, the way
+a fresh clone is.
 
 The **integration test** is the proof of the core guarantee: it fires 12 concurrent booking requests at
 the same slot and asserts exactly one succeeds, then asserts the DB rejects a direct overlapping insert.
