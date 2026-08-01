@@ -15,19 +15,31 @@ function SubmitButton({ label }: { label: string }) {
   );
 }
 
-/** Segmented strength meter driven by the shared scorePassword policy. */
+/**
+ * Segmented strength meter driven by the shared scorePassword policy.
+ *
+ * Sentence case, not uppercase. The meter used to shout "WEAK · NEEDS 10+
+ * CHARS, A-Z, 0-9" at someone who is already stuck; the words are the same and
+ * the tone is not. The bars are decorative — the label carries the same
+ * information as text, so the meter still works in greyscale and is still
+ * announced by the `aria-live` region when the score changes.
+ */
 function StrengthMeter({ password }: { password: string }) {
   const { score, label, valid } = useMemo(() => scorePassword(password), [password]);
   const segments = [1, 2, 3, 4];
   return (
-    <div className="strength" aria-live="polite">
-      <div className="strength-bars">
+    <div className="strength">
+      <div className="strength-bars" aria-hidden="true">
         {segments.map((n) => (
           <span key={n} className={`strength-seg${n <= score ? ' on' : ''}`} />
         ))}
       </div>
-      <span className="strength-label mono">
-        {password.length === 0 ? 'PASSWORD STRENGTH' : `${label.toUpperCase()}${valid ? '' : ' · needs 10+ chars, A-z, 0-9'}`}
+      <span className="strength-label" aria-live="polite">
+        {password.length === 0
+          ? 'Password strength'
+          : `${label[0]!.toUpperCase()}${label.slice(1)}${
+              valid ? '' : ' · needs 10+ characters, upper and lower case, and a digit'
+            }`}
       </span>
     </div>
   );

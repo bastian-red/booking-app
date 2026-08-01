@@ -23,8 +23,12 @@ export default defineConfig({
   // API base URL is exposed to tests via this env-backed value.
   metadata: { apiBaseUrl: API_URL },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
+    // Signs in once and parks the session in .auth/host.json. Everything that
+    // needs a host reuses it, because /auth/login is capped at 5/min per IP and
+    // a per-test login saturates that budget. See tests/auth.setup.ts.
+    { name: 'setup', testMatch: /auth\.setup\.ts/ },
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] }, dependencies: ['setup'] },
+    { name: 'firefox', use: { ...devices['Desktop Firefox'] }, dependencies: ['setup'] },
   ],
   // The full stack (web/api/worker/postgres/redis) is started by CI before this
   // runs. Locally, start it with docker compose + pnpm dev, then run the tests.

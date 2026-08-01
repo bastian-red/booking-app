@@ -77,7 +77,10 @@ test('host sets up an event and a guest books it', async ({ page }) => {
     await page.getByRole('button', { name: /Confirm/ }).click();
 
     await expect(page).toHaveURL(/\/booking\//);
-    await expect(page.getByText("You're booked!")).toBeVisible();
-    await expect(page.getByText('confirmed')).toBeVisible();
+    // The heading rather than the raw string: the confirmation is a receipt
+    // whose wording is design copy, and a substring match on it breaks every
+    // time someone drops an exclamation mark.
+    await expect(page.getByRole('heading', { name: /You're booked/ })).toBeVisible();
+    await expect(page.getByText('Confirmed')).toBeVisible();
   });
 });

@@ -4,8 +4,11 @@ import { auth, signOut } from '../auth';
 export async function Nav() {
   const session = await auth();
   return (
-    <nav className="nav">
+    <nav className="nav" aria-label="Primary">
       <Link href="/" className="brand">
+        {/* A clock face drawn in CSS. Decorative: the accessible name is the
+            word beside it, so it stays out of the a11y tree. */}
+        <span className="mark" aria-hidden="true" />
         Booking
       </Link>
       <div className="links">
@@ -18,7 +21,7 @@ export async function Nav() {
                 await signOut({ redirectTo: '/' });
               }}
             >
-              <button className="btn" type="submit">
+              <button className="btn btn-quiet" type="submit">
                 Sign out
               </button>
             </form>
