@@ -29,13 +29,13 @@ test.describe('account-creation hardening', () => {
   test('signup shows a live password strength meter', async ({ page }) => {
     await page.goto('/signup');
     const label = page.locator('.strength-label');
-    await expect(label).toHaveText(/PASSWORD STRENGTH/);
+    await expect(label).toHaveText(/Password strength/);
 
     await page.getByLabel('Password', { exact: true }).fill('abc');
-    await expect(label).toHaveText(/WEAK|FAIR/);
+    await expect(label).toHaveText(/Weak|Fair/);
 
     await page.getByLabel('Password', { exact: true }).fill('E2eStr0ngPass');
-    await expect(label).toHaveText(/STRONG/);
+    await expect(label).toHaveText(/Strong/);
     // All four meter segments light up for a strong password.
     await expect(page.locator('.strength-seg.on')).toHaveCount(4);
   });

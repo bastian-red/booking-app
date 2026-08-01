@@ -4,16 +4,20 @@ import { Nav } from '../components/nav';
 export default function Home() {
   return (
     <>
+      <a className="skip-link" href="#main">
+        Skip to content
+      </a>
       <Nav />
-      <div className="container">
+      <main className="container" id="main">
         <section className="hero">
+          <p className="eyebrow">Timezone-correct scheduling</p>
           <h1>Scheduling that never double-books.</h1>
           <p>
             A Calendly-style booking platform with timezone-correct slots, concurrency-safe
             reservations backed by a Postgres exclusion constraint, Stripe payments, and email
             reminders.
           </p>
-          <div className="row" style={{ marginTop: 24 }}>
+          <div className="row" style={{ marginTop: 'var(--s-6)' }}>
             <Link href="/signup" className="btn btn-primary">
               Create your booking page
             </Link>
@@ -46,7 +50,7 @@ export default function Home() {
             </p>
           </div>
         </div>
-      </div>
+      </main>
     </>
   );
 }

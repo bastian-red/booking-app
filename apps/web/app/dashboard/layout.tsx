@@ -1,23 +1,22 @@
 import type { ReactNode } from 'react';
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { Nav } from '@/components/nav';
+import { DashboardTabs } from '@/components/dashboard-tabs';
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const session = await auth();
   if (!session?.user) redirect('/login');
   return (
     <>
+      <a className="skip-link" href="#main">
+        Skip to content
+      </a>
       <Nav />
-      <div className="container">
-        <div className="row" style={{ marginBottom: 20, gap: 20 }}>
-          <Link href="/dashboard">Event types</Link>
-          <Link href="/dashboard/availability">Availability</Link>
-          <Link href="/dashboard/bookings">Bookings</Link>
-        </div>
+      <main className="container" id="main">
+        <DashboardTabs />
         {children}
-      </div>
+      </main>
     </>
   );
 }

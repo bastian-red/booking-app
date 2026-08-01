@@ -5,8 +5,13 @@ import { signupAction } from '../auth-actions';
 export default function SignupPage() {
   return (
     <>
+      <a className="skip-link" href="#main">
+        Skip to content
+      </a>
       <Nav />
-      <AuthForm mode="signup" action={signupAction} />
+      <main id="main">
+        <AuthForm mode="signup" action={signupAction} />
+      </main>
     </>
   );
 }
